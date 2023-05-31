@@ -47,5 +47,8 @@
     "typescript": "^5.0.4",
     "vite": "^4.3.9",
     "vitest": "^0.31.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/ryinner"
   }
 }
