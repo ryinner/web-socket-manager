@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "ES5",
+        "moduleResolution": "node",
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "esModuleInterop": true,
+        "sourceMap": true,
+        "noEmitOnError": true,
+        "removeComments": true,
+        "allowJs": false,
+        "strict": true,
+        "isolatedModules": true,
+        "skipLibCheck": true,
+        "rootDir": "src",
+        "outDir": "./dist/",
+        "types": ["vite/client", "node"],
+        "paths": {
+            "@/*": ["./src/*"]
+        }
+    },
+    "exclude": ["node_modules"]
+}

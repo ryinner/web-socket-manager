@@ -1,0 +1,59 @@
+{
+    "root": true,
+    "env": {
+        "browser": true,
+        "es2021": true,
+        "node": true,
+        "webextensions": true
+    },
+    "parserOptions": {
+        "parser": "@typescript-eslint/parser",
+        "project": "./tsconfig.json",
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "extends": "standard-with-typescript",
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "rules": {
+        "prefer-const": "error",
+        "prefer-exponentiation-operator": "error",
+        "prefer-object-spread": "warn",
+        "prefer-template": "error",
+        "for-direction": "error",
+        "no-duplicate-imports": "error",
+        "no-promise-executor-return": "error",
+        "no-self-compare": "error",
+        "no-template-curly-in-string": "error",
+        "arrow-body-style": ["error", "as-needed"],
+        "no-alert": "error",
+        "no-proto": "error",
+        "no-var": "error",
+        "no-tabs": "error",
+        "indent": ["error", 4, {"SwitchCase": 1}],
+        "array-bracket-spacing": "warn",
+        "no-multi-spaces": "warn",
+        "brace-style": ["error", "1tbs", {"allowSingleLine": true}],
+        "comma-spacing": "warn",
+        "func-call-spacing": ["error", "never"],
+        "implicit-arrow-linebreak": ["warn", "beside"],
+        "no-multiple-empty-lines": "error",
+        "semi": ["error", "always"],
+        "space-before-function-paren": "off",
+        "key-spacing": "off",
+        "@typescript-eslint/key-spacing": "warn",
+        "@typescript-eslint/indent": ["error", 4, {"SwitchCase": 1}],
+        "@typescript-eslint/semi": ["error", "always"],
+        "@typescript-eslint/member-delimiter-style": ["error", {
+            "multiline": {
+                "delimiter": "semi",
+                "requireLast": true
+            },
+            "singleline": {
+                "delimiter": "semi",
+                "requireLast": false
+            }
+        }],
+        "@typescript-eslint/consistent-type-assertions": ["error", {"assertionStyle": "angle-bracket"}]
+    }
+}
