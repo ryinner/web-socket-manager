@@ -17,6 +17,7 @@ class WebSocketManager {
         if (!(this.webSocketInstance instanceof WebSocket) || this.webSocketInstance.readyState === WebSocket.CLOSED) {
             this.webSocketInstance = new WebSocket(this.wss);
         }
+
         return this.webSocketInstance;
     }
 
@@ -31,7 +32,7 @@ class WebSocketManager {
     }
 
     public start (): void {
-        if (this instanceof WebSocketManager && !this.isOpen() && this.webSocket instanceof WebSocket) {
+        if (this instanceof WebSocketManager && this.webSocket instanceof WebSocket && !this.isOpen()) {
             this.webSocket.onopen = () => {
                 clearInterval(this.reconnectInterval);
                 this.operations.forEach(webSocketOperation => {
