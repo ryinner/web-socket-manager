@@ -115,3 +115,4 @@ class WebSocketManager {
 }
 
 export default WebSocketManager;
+export { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation };
