@@ -12,10 +12,13 @@
         "isolatedModules": true,
         "skipLibCheck": true,
         "outDir": "./dist/",
-        "types": ["vite/client", "node"],
+        "rootDir": "src",
+        "types": ["vite/client"],
+        "typeRoots": ["node_modules/@types"],
         "paths": {
             "@/*": ["./src/*"]
         }
     },
+    "include": ["src/**/*"],
     "exclude": ["node_modules"]
 }
