@@ -1,6 +1,8 @@
 import { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation } from './websocket.interface';
 
 class WebSocketManager {
+    private readonly isTesting: boolean = false;
+
     private webSocketInstance!: WebSocket;
     private readonly operations: WebSocketOperation[] = [];
     private readonly defaultInterval: number = 3000;
@@ -14,7 +16,7 @@ class WebSocketManager {
     }
 
     private get webSocket (): WebSocket {
-        if (!(this.webSocketInstance instanceof WebSocket) || this.webSocketInstance.readyState === WebSocket.CLOSED) {
+        if (this.webSocketInstance === undefined || !(this.isWebSocket(this.webSocketInstance)) || this.webSocketInstance.readyState === WebSocket.CLOSED) {
             this.webSocketInstance = new WebSocket(this.wss);
         }
 
@@ -26,38 +28,17 @@ class WebSocketManager {
             clearInterval(webSocketOperation.interval);
         });
         clearInterval(this.reconnectInterval);
-        if ((this.webSocketInstance instanceof WebSocket) && !this.isClosed()) {
+        if ((this.isWebSocket(this.webSocketInstance)) && !this.isClosed()) {
             this.webSocketInstance.close();
         }
     }
 
     public start (): void {
-        if (this instanceof WebSocketManager && !this.isOpen() && this.webSocket instanceof WebSocket) {
-            this.webSocket.onopen = () => {
-                clearInterval(this.reconnectInterval);
-                this.operations.forEach(webSocketOperation => {
-                    webSocketOperation.interval = setInterval(webSocketOperation.callback, this.defaultInterval, this.webSocket);
-                });
-            };
-            this.webSocket.onerror = () => {
-                this.stop();
-            };
-            this.webSocket.onclose = (event) => {
-                if (!event.wasClean) {
-                    this.reconnectInterval = setInterval(this.start, this.defaultInterval);
-                }
-            };
-            this.webSocket.onmessage = (answer: MessageEvent) => {
-                const answerDecoded = JSON.parse(answer.data);
-                if (this.isValidWebSocketAnswer(answerDecoded)) {
-                    const handlers = this.operations.find(operation => operation.method === answerDecoded.method)?.handlers;
-                    if (handlers instanceof Array) {
-                        handlers.forEach(handler => {
-                            handler(answerDecoded.data);
-                        });
-                    }
-                }
-            };
+        if (this instanceof WebSocketManager && !this.isOpen() && this.isWebSocket(this.webSocketInstance)) {
+            this.webSocket.onopen = () => { this.onOpenHandler(); };
+            this.webSocket.onerror = () => { this.stop(); };
+            this.webSocket.onclose = (event) => { this.onCloseHandler(event); };
+            this.webSocket.onmessage = (answer: MessageEvent) => { this.onMessageHandler(answer); };
         }
     }
 
@@ -81,17 +62,42 @@ class WebSocketManager {
             clearInterval(operation.interval);
             this.operations.splice(this.operations.indexOf(operation), 1);
         } else {
-            throw new Error('Operation doesn\'t exist');
+            throw new Error(OPERATION_DOESNT_EXIST_ERROR);
         }
     }
 
-    public addHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
+    private addHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
         const operation = this.findOperation(method);
         if (operation !== undefined) {
             operation.handlers.push(handler);
         } else {
-            throw new Error('Operation doesn\'t exist');
+            throw new Error(OPERATION_DOESNT_EXIST_ERROR);
         }
+    }
+
+    private onCloseHandler (event: CloseEvent): void {
+        if (!event.wasClean) {
+            this.reconnectInterval = setInterval(this.start, this.defaultInterval);
+        }
+    }
+
+    private onMessageHandler (answer: MessageEvent): void {
+        const answerDecoded = JSON.parse(answer.data);
+        if (this.isValidWebSocketAnswer(answerDecoded)) {
+            const handlers = this.findOperation(answerDecoded.method)?.handlers;
+            if (handlers instanceof Array) {
+                handlers.forEach(handler => {
+                    handler(answerDecoded.data);
+                });
+            }
+        }
+    }
+
+    private onOpenHandler (): void {
+        clearInterval(this.reconnectInterval);
+        this.operations.forEach(webSocketOperation => {
+            webSocketOperation.interval = setInterval(webSocketOperation.callback, this.defaultInterval, this.webSocket);
+        });
     }
 
     private isValidWebSocketAnswer (answer: unknown): answer is WebSocketAnswerDecoded {
@@ -113,7 +119,12 @@ class WebSocketManager {
     private isClosed (): boolean {
         return this.closeWebSocketStatuses.includes(this.webSocketInstance?.readyState);
     }
+
+    private isWebSocket (instance: unknown): instance is WebSocket {
+        return instance instanceof WebSocket || this.isTesting;
+    }
 }
 
 export default WebSocketManager;
 export { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation };
+export const OPERATION_DOESNT_EXIST_ERROR = 'Operation doesn\'t exist';
