@@ -1,23 +1,21 @@
 {
   "name": "@ryinner/web-socket-manager",
-  "version": "0.9.16",
+  "version": "0.9.17",
   "description": "simple ws manager",
   "main": "./dist/cjs/websocket.js",
   "types": "./dist/types/websocket.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "default": "./dist/esm/websocket.js",
-        "types": "./dist/types/websocket.d.ts"
+      "types": "./dist/types/websocket.d.ts",
+      "node": {
+        "import": {
+          "default": "./dist/esm/websocket.js"
+        },
+        "require": {
+          "default": "./dist/cjs/websocket.js"
+        }
       },
-      "require": {
-        "default": "./dist/cjs/websocket.js",
-        "types": "./dist/types/websocket.d.ts"
-      },
-      "default": {
-        "default": "./dist/cjs/websocket.js",
-        "types": "./dist/types/websocket.d.ts"
-      }
+      "default": "./dist/cjs/websocket.js"
     }
   },
   "files": [
