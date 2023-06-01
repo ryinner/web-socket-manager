@@ -1,6 +1,6 @@
 {
   "name": "@ryinner/web-socket-manager",
-  "version": "0.9.9",
+  "version": "0.9.10",
   "description": "simple ws manager",
   "main": "./dist/cjs/websocket.js",
   "types": "./dist/types/websocket.d.ts",
@@ -42,7 +42,7 @@
     "eslint": "^8.41.0",
     "eslint-config-standard-with-typescript": "^34.0.1",
     "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-n": "^16.0.0",
+    "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-promise": "^6.1.1",
     "happy-dom": "^9.20.3",
     "typescript": "^5.0.4",
