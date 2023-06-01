@@ -32,7 +32,7 @@ class WebSocketManager {
     }
 
     public start (): void {
-        if (this instanceof WebSocketManager && this.webSocket instanceof WebSocket && !this.isOpen()) {
+        if (this instanceof WebSocketManager && !this.isOpen() && this.webSocket instanceof WebSocket) {
             this.webSocket.onopen = () => {
                 clearInterval(this.reconnectInterval);
                 this.operations.forEach(webSocketOperation => {
