@@ -34,7 +34,7 @@ class WebSocketManager {
     }
 
     public start (): void {
-        if (this instanceof WebSocketManager && !this.isOpen() && this.isWebSocket(this.webSocketInstance)) {
+        if (this instanceof WebSocketManager && !this.isOpen() && this.isWebSocket(this.webSocket)) {
             this.webSocket.onopen = () => { this.onOpenHandler(); };
             this.webSocket.onerror = () => { this.stop(); };
             this.webSocket.onclose = (event) => { this.onCloseHandler(event); };
