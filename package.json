@@ -1,6 +1,6 @@
 {
   "name": "@ryinner/web-socket-manager",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "simple ws manager",
   "main": "./dist/cjs/websocket.js",
   "types": "./dist/types/websocket.d.ts",
