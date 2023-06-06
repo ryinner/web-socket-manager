@@ -28,6 +28,9 @@ ws.addOperation(
 // remove operation
 ws.removeOperation('method');
 
+//remove handler
+ws.removeHandler('method', handler);
+
 // start websocket
 ws.start();
 

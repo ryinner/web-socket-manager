@@ -66,6 +66,15 @@ class WebSocketManager {
         }
     }
 
+    public removeHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
+        const operation = this.findOperation(method);
+        if (operation?.handlers.length === 1) {
+            this.removeOperation(method);
+        } else {
+            operation?.handlers.splice(operation?.handlers.indexOf(handler), 1);
+        }
+    }
+
     private addHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
         const operation = this.findOperation(method);
         if (operation !== undefined) {

@@ -89,7 +89,23 @@ describe('WebsocketManager', () => {
         websocket.addHandler('test', () => { });
 
         // @ts-expect-error
-        expect(websocket.findOperation('test')?.handlers.length).equal(2);
+        expect(websocket.findOperation('test')?.handlers.length).toBe(2);
+        // @ts-expect-error
+        expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
+    });
+
+    test('removeHandler', () => {
+        const websocket = new WebSocketManager('test');
+
+        const testHandler = (): void => { };
+        const testHandler2 = (): void => { };
+
+        websocket.addOperation('test', () => { }, testHandler);
+        websocket.addOperation('test', () => { }, testHandler2);
+        websocket.removeHandler('test', testHandler2);
+        // @ts-expect-error
+        expect(websocket.findOperation('test')?.handlers.length).toBe(1);
+        websocket.removeHandler('test', testHandler);
         // @ts-expect-error
         expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
     });
@@ -108,15 +124,28 @@ describe('WebsocketManager', () => {
     test('addOperation', () => {
         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => { }, () => { });
+        websocket.addOperation('test', () => {}, () => { });
 
         // @ts-expect-error
         expect(websocket.findOperation('test')?.handlers.length).equal(1);
 
-        websocket.addOperation('test', () => { }, () => { });
+        websocket.addOperation('test', () => {}, () => { });
 
         // @ts-expect-error
-        expect(websocket.findOperation('test')?.handlers.length).equal(2);
+        const operation = websocket.findOperation('test');
+
+        expect(operation?.handlers.length).equal(2);
+        expect(operation?.interval).equal(0);
+        // @ts-expect-error
+        websocket.webSocket.readyState = 1;
+
+        const spy = vi.fn();
+
+        websocket.addOperation('test2', spy, () => { });
+
+        vi.advanceTimersToNextTimer();
+
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     test('setOnOpenHandler', () => {
