@@ -55,7 +55,7 @@ describe('WebsocketManager', () => {
     test('checkOperationUnique', () => {
         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => { }, () => { });
+        websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
         // @ts-expect-error
         expect(websocket.checkOperationUnique('test')).toBeFalsy();
@@ -64,7 +64,7 @@ describe('WebsocketManager', () => {
     test('findOperation', () => {
         const websocket = new WebSocketManager('test');
 
-        const checkCallback = (): void => { };
+        const checkCallback = (): object => ({ data: 123 });
 
         websocket.addOperation('test', checkCallback, () => { });
 
@@ -84,7 +84,7 @@ describe('WebsocketManager', () => {
     test('addHandler', () => {
         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => { }, () => { });
+        websocket.addOperation('test', () => ({ data: 123 }), () => { });
         // @ts-expect-error
         websocket.addHandler('test', () => { });
 
@@ -100,8 +100,8 @@ describe('WebsocketManager', () => {
         const testHandler = (): void => { };
         const testHandler2 = (): void => { };
 
-        websocket.addOperation('test', () => { }, testHandler);
-        websocket.addOperation('test', () => { }, testHandler2);
+        websocket.addOperation('test', () => ({ data: 123 }), testHandler);
+        websocket.addOperation('test', () => ({ data: 123 }), testHandler2);
         websocket.removeHandler('test', testHandler2);
         // @ts-expect-error
         expect(websocket.findOperation('test')?.handlers.length).toBe(1);
@@ -113,7 +113,7 @@ describe('WebsocketManager', () => {
     test('removeOperation', () => {
         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => { }, () => { });
+        websocket.addOperation('test', () => ({ data: 123 }), () => { });
         websocket.removeOperation('test');
 
         // @ts-expect-error
@@ -124,12 +124,12 @@ describe('WebsocketManager', () => {
     test('addOperation', () => {
         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => {}, () => { });
+        websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
         // @ts-expect-error
         expect(websocket.findOperation('test')?.handlers.length).equal(1);
 
-        websocket.addOperation('test', () => {}, () => { });
+        websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
         // @ts-expect-error
         const operation = websocket.findOperation('test');
@@ -168,7 +168,7 @@ describe('WebsocketManager', () => {
 
         const spy = vi.fn();
 
-        webSocket.addOperation('test', () => {}, spy);
+        webSocket.addOperation('test', () => ({ data: 123 }), spy);
 
         const fixture = { method: 'test', data: { data: 'test' } };
 
@@ -207,7 +207,7 @@ describe('WebsocketManager', () => {
         // @ts-expect-error
         webSocket.isTesting = true;
 
-        webSocket.addOperation('test', () => {}, () => {});
+        webSocket.addOperation('test', () => ({ data: 123 }), () => {});
 
         webSocket.start();
         webSocket.stop();

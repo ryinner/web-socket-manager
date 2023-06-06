@@ -1,4 +1,4 @@
-import type { WebSocketAnswerDecoded, WebSocketCallback, WebSocketManagerSettings, WebSocketMessageHandlerCallback, WebSocketOperation } from './websocket.interface';
+import type { WebSocketAnswerDecoded, WebSocketCallback, WebSocketManagerSettings, WebSocketMessageHandlerCallback, WebSocketOperation, WebSocketOperationSetting } from './websocket.interface';
 
 class WebSocketManager {
     private readonly isTesting: boolean = false;
@@ -44,14 +44,18 @@ class WebSocketManager {
         }
     }
 
-    public addOperation (method: string, callback: WebSocketCallback, handler: WebSocketMessageHandlerCallback): void {
+    public addOperation (method: string, callback: WebSocketCallback, handler: WebSocketMessageHandlerCallback, settings?: WebSocketOperationSetting): void {
         if (this.checkOperationUnique(method)) {
-            const operationInterval = this.isOpen() ? setInterval(callback, this.defaultInterval, this.webSocket) : 0;
+            const needInterval = this.isOpen() && settings?.isOnce !== true;
+            const parsedCallback = (): void => { this.webSocket.readyState === WebSocket.OPEN ? this.webSocket.send(JSON.stringify({ method, data: callback() })) : setTimeout(parsedCallback, 1000); };
+
+            const operationInterval = needInterval ? setInterval(parsedCallback, settings?.interval ?? this.defaultInterval, this.webSocket) : 0;
             this.operations.push({
                 method,
-                callback,
+                callback: parsedCallback,
                 handlers: [handler],
-                interval: operationInterval
+                interval: operationInterval,
+                settings
             });
         } else {
             this.addHandler(method, handler);
@@ -77,6 +81,12 @@ class WebSocketManager {
         }
     }
 
+    public sendMessage (method: string, data: object, handler: WebSocketMessageHandlerCallback): void {
+        this.addOperation(method, () => data, handler, {
+            isOnce: true
+        });
+    }
+
     private addHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
         const operation = this.findOperation(method);
         if (operation !== undefined) {
@@ -94,12 +104,16 @@ class WebSocketManager {
 
     private onMessageHandler (answer: MessageEvent): void {
         const answerDecoded = JSON.parse(answer.data);
-        if (this.isValidWebSocketAnswer(answerDecoded)) {
-            const handlers = this.findOperation(answerDecoded.method)?.handlers;
+        const operation = this.findOperation(answerDecoded.method);
+        if (this.isValidWebSocketAnswer(answerDecoded) && operation !== undefined) {
+            const { handlers, settings, method } = operation;
             if (handlers instanceof Array) {
                 handlers.forEach(handler => {
                     handler(answerDecoded.data);
                 });
+                if (settings?.isOnce === true) {
+                    this.removeOperation(method);
+                }
             }
         }
     }
@@ -107,7 +121,11 @@ class WebSocketManager {
     private onOpenHandler (): void {
         clearInterval(this.reconnectInterval);
         this.operations.forEach(webSocketOperation => {
-            webSocketOperation.interval = setInterval(webSocketOperation.callback, this.defaultInterval, this.webSocket);
+            if (webSocketOperation.settings?.isOnce !== true) {
+                webSocketOperation.interval = setInterval(webSocketOperation.callback, webSocketOperation.settings?.interval ?? this.defaultInterval, this.webSocket);
+            } else {
+                webSocketOperation.callback();
+            }
         });
     }
 

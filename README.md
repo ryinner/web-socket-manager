@@ -13,17 +13,21 @@ npm install @ryinner/web-socket-manager --save
 ```typescript
 const ws = new WebSocketManager('your wss');
 
-// add operation
+// add operation - interval server request
 // if you add same operation, its handler will add to operation handlers.
 ws.addOperation(
     'method',
-    (WebSocketInstance) => {
-        webSocketInstance.send(JSON.stringify({ method: 'method', data: { myFieldToWebSocket: 1 } }))
-    },
+    () => {
+        const computed = 1;
+        return { myFieldToWebSocket: computed };
+    }, // send message { method: 'method', data: { myFieldToWebSocket: 1 } };
     (answerFromServer) => {
         // smth
     }
 );
+
+// send message - if you want send one message
+ws.sendMessage('method', {data: 'data'}, (answer) => { console.log(answer); });
 
 // remove operation
 ws.removeOperation('method');
