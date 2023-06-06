@@ -10,6 +10,10 @@ export interface WebSocketOperation {
     interval: number | NodeJS.Timer;
 }
 
+export interface WebSocketManagerSettings {
+    interval: number;
+}
+
 export type WebSocketAnswerData = Record<string, unknown>;
 export type WebSocketCallback = (webSocket: WebSocket) => void;
 export type WebSocketMessageHandlerCallback = (data: WebSocketAnswerData) => void;

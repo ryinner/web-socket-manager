@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import WebSocketManager, { OPERATION_DOESNT_EXIST_ERROR } from './websocket';
+import WebSocketManager, { DEFAULT_SOCKET_INTERVAL, OPERATION_DOESNT_EXIST_ERROR } from './websocket';
 
 type Writable<T> = T extends object ? { -readonly [K in keyof T]: Writable<T[K]> } : T;
 
@@ -216,5 +216,19 @@ describe('WebsocketManager', () => {
 
         // @ts-expect-error
         expect(webSocket.findOperation('test')?.interval).equal(0);
+    });
+
+    test('settings', () => {
+        const webSocket = new WebSocketManager('test');
+
+        // @ts-expect-error
+        expect(webSocket.defaultInterval).equal(DEFAULT_SOCKET_INTERVAL);
+
+        const webSocket2 = new WebSocketManager('test', {
+            interval: 1000
+        });
+
+        // @ts-expect-error
+        expect(webSocket2.defaultInterval).equal(1000);
     });
 });

@@ -1,18 +1,20 @@
-import { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation } from './websocket.interface';
+import type { WebSocketAnswerDecoded, WebSocketCallback, WebSocketManagerSettings, WebSocketMessageHandlerCallback, WebSocketOperation } from './websocket.interface';
 
 class WebSocketManager {
     private readonly isTesting: boolean = false;
 
     private webSocketInstance!: WebSocket;
     private readonly operations: WebSocketOperation[] = [];
-    private readonly defaultInterval: number = 3000;
+    private readonly defaultInterval: number;
     private reconnectInterval!: number | NodeJS.Timer;
     private readonly openWebSocketStatuses: number[] = [WebSocket.CONNECTING, WebSocket.OPEN];
     private readonly closeWebSocketStatuses: number[] = [WebSocket.CLOSING, WebSocket.CLOSED];
     private readonly wss: string;
 
-    constructor (webSocketUrl: string) {
+    constructor (webSocketUrl: string, settings?: WebSocketManagerSettings) {
         this.wss = webSocketUrl;
+
+        this.defaultInterval = settings?.interval ?? DEFAULT_SOCKET_INTERVAL;
     }
 
     private get webSocket (): WebSocket {
@@ -137,3 +139,4 @@ class WebSocketManager {
 export default WebSocketManager;
 export { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation };
 export const OPERATION_DOESNT_EXIST_ERROR = 'Operation doesn\'t exist';
+export const DEFAULT_SOCKET_INTERVAL = 3000;
