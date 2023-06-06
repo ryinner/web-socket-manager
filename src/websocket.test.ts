@@ -12,6 +12,7 @@ const webSocketSpy = {
     onclose: vi.fn(),
     onopen: vi.fn(),
     close: vi.fn(),
+    send: vi.fn(),
     readyState: 1
 };
 
@@ -69,7 +70,7 @@ describe('WebsocketManager', () => {
         websocket.addOperation('test', checkCallback, () => { });
 
         // @ts-expect-error
-        expect(websocket.findOperation('test')?.callback).toBe(checkCallback);
+        expect(websocket.findOperation('test')?.method).toBe('test');
     });
 
     test('isValidWebSocketAnswer', () => {
@@ -141,19 +142,28 @@ describe('WebsocketManager', () => {
 
         const spy = vi.fn();
 
-        websocket.addOperation('test2', spy, () => { });
+        websocket.addOperation('test2', spy, () => { }, { isOnce: false });
+        websocket.addOperation('test3', () => ({}), () => { }, { isOnce: true });
 
         vi.advanceTimersToNextTimer();
 
+        expect(webSocketSpy.send).toHaveBeenCalledOnce();
+
         expect(spy).toHaveBeenCalledOnce();
+        // @ts-expect-error
+        expect(websocket.findOperation('test2')?.interval).not.toBe(0);
+        // @ts-expect-error
+        expect(websocket.findOperation('test3')?.interval).toBe(0);
     });
 
     test('setOnOpenHandler', () => {
         const webSocket = new WebSocketManager('test');
 
         const spy = vi.fn();
+        const spy2 = vi.fn();
 
-        webSocket.addOperation('test', spy, () => {});
+        webSocket.addOperation('test', spy, () => { }, { isOnce: false });
+        webSocket.addOperation('test2', spy2, () => { }, { isOnce: true });
 
         // @ts-expect-error
         webSocket.onOpenHandler();
@@ -161,6 +171,11 @@ describe('WebsocketManager', () => {
         vi.advanceTimersToNextTimer();
 
         expect(spy).toHaveBeenCalledOnce();
+        // @ts-expect-error
+        expect(webSocket.findOperation('test')?.interval).not.toBe(0);
+
+        // @ts-expect-error
+        expect(webSocket.findOperation('test2')?.interval).toBe(0);
     });
 
     test('onMessageHandler', () => {
@@ -169,12 +184,18 @@ describe('WebsocketManager', () => {
         const spy = vi.fn();
 
         webSocket.addOperation('test', () => ({ data: 123 }), spy);
+        webSocket.addOperation('test2', () => ({ data: 123 }), spy, { isOnce: true });
 
         const fixture = { method: 'test', data: { data: 'test' } };
+        const fixture2 = { method: 'test2', data: { data: 'test' } };
 
         // @ts-expect-error
         webSocket.onMessageHandler({ data: JSON.stringify(fixture) });
         expect(spy).toHaveBeenCalledOnce();
+        // @ts-expect-error
+        webSocket.onMessageHandler({ data: JSON.stringify(fixture2) });
+        // @ts-expect-error
+        expect(webSocket.findOperation('test2')).toBe(undefined);
     });
 
     test('onCloseHandler', () => {
@@ -207,7 +228,7 @@ describe('WebsocketManager', () => {
         // @ts-expect-error
         webSocket.isTesting = true;
 
-        webSocket.addOperation('test', () => ({ data: 123 }), () => {});
+        webSocket.addOperation('test', () => ({ data: 123 }), () => { });
 
         webSocket.start();
         webSocket.stop();
@@ -230,5 +251,14 @@ describe('WebsocketManager', () => {
 
         // @ts-expect-error
         expect(webSocket2.defaultInterval).equal(1000);
+    });
+
+    test('sendMessage', () => {
+        const webSocket = new WebSocketManager('test');
+
+        webSocket.sendMessage('test', { test: 'test' }, () => { });
+
+        // @ts-expect-error
+        expect(webSocket.findOperation('test')?.settings?.isOnce).toBeTruthy();
     });
 });
