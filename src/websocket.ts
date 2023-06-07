@@ -47,7 +47,15 @@ class WebSocketManager {
     public addOperation (method: string, callback: WebSocketCallback, handler: WebSocketMessageHandlerCallback, settings?: WebSocketOperationSetting): void {
         if (this.checkOperationUnique(method)) {
             const needInterval = this.isOpen() && settings?.isOnce !== true;
-            const parsedCallback = (): void => { this.webSocket.readyState === WebSocket.OPEN ? this.webSocket.send(JSON.stringify({ method, data: callback() })) : setTimeout(parsedCallback, 1000); };
+            const parsedCallback = (): void => {
+                if (this.isAvailableToSendMessages()) {
+                    this.webSocket.send(JSON.stringify({ method, data: callback() }));
+                } else {
+                    if (settings?.isOnce === true) {
+                        setTimeout(parsedCallback, 1000);
+                    }
+                }
+            };
 
             const operationInterval = needInterval ? setInterval(parsedCallback, settings?.interval ?? this.defaultInterval, this.webSocket) : 0;
             this.operations.push({
@@ -139,6 +147,10 @@ class WebSocketManager {
 
     private checkOperationUnique (method: string): boolean {
         return this.findOperation(method) === undefined;
+    }
+
+    private isAvailableToSendMessages (): boolean {
+        return this.webSocketInstance.readyState === WebSocket.OPEN;
     }
 
     private isOpen (): boolean {
