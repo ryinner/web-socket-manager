@@ -1,57 +1,82 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-// import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-// import WebSocketManager, { DEFAULT_SOCKET_INTERVAL, OPERATION_DOESNT_EXIST_ERROR } from './websocket';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import WebSocketManager from './websocket';
 
-// type Writable<T> = T extends object ? { -readonly [K in keyof T]: Writable<T[K]> } : T;
+type Writable<T> = T extends object ? { -readonly [K in keyof T]: Writable<T[K]> } : T;
 
-// type WebSocketMock = Partial<Writable<WebSocket>>;
+type WebSocketMock = Partial<Writable<WebSocket>>;
 
-// const webSocketSpy = {
-//     onmessage: vi.fn(),
-//     onerror: vi.fn(),
-//     onclose: vi.fn(),
-//     onopen: vi.fn(),
-//     close: vi.fn(),
-//     send: vi.fn(),
-//     readyState: 1
-// };
+const webSocketSpy = {
+    onmessage: vi.fn(),
+    onerror: vi.fn(),
+    onclose: vi.fn(),
+    onopen: vi.fn(),
+    close: vi.fn(),
+    send: vi.fn(),
+    readyState: 1
+};
 
-// const mockWebSocket = <WebSocketMock> vi.fn<[], WebSocketMock>(() => webSocketSpy);
+const mockWebSocket = <WebSocketMock> vi.fn<[], WebSocketMock>(() => webSocketSpy);
 
-// mockWebSocket.CONNECTING = 0;
-// mockWebSocket.OPEN = 1;
-// mockWebSocket.CLOSING = 2;
-// mockWebSocket.CLOSED = 3;
+mockWebSocket.CONNECTING = 0;
+mockWebSocket.OPEN = 1;
+mockWebSocket.CLOSING = 2;
+mockWebSocket.CLOSED = 3;
 
-// vi.stubGlobal('WebSocket', mockWebSocket);
-// describe('WebsocketManager', () => {
-//     beforeEach(() => {
-//         vi.useFakeTimers();
-//     });
+vi.stubGlobal('WebSocket', mockWebSocket);
+describe('WebsocketManager', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
 
-//     afterEach(() => {
-//         vi.restoreAllMocks();
-//     });
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-//     test('isOpen', () => {
-//         const webSocket = new WebSocketManager('test');
+    test('isOpen', () => {
+        const webSocket = new WebSocketManager({ url: 'wss' });
 
-//         // @ts-expect-error
-//         webSocket.webSocketInstance = { readyState: 1 };
+        // @ts-expect-error
+        webSocket.webSocketInstance = { readyState: mockWebSocket.OPEN };
 
-//         // @ts-expect-error
-//         expect(webSocket.isOpen()).toBeTruthy();
-//     });
+        // @ts-expect-error
+        expect(webSocket.isOpen()).toBeTruthy();
+    });
 
-//     test('isClosed', () => {
-//         const webSocket = new WebSocketManager('test');
+    test('isClose', () => {
+        const webSocket = new WebSocketManager({ url: 'wss' });
 
-//         // @ts-expect-error
-//         webSocket.webSocketInstance = { readyState: 3 };
+        // @ts-expect-error
+        webSocket.webSocketInstance = { readyState: mockWebSocket.CLOSED };
 
-//         // @ts-expect-error
-//         expect(webSocket.isClosed()).toBeTruthy();
-//     });
+        // @ts-expect-error
+        expect(webSocket.isClose()).toBeTruthy();
+    });
+
+    test('isClosing', () => {
+        const webSocket = new WebSocketManager({ url: 'wss' });
+
+        // @ts-expect-error
+        webSocket.webSocketInstance = { readyState: mockWebSocket.CLOSING };
+
+        // @ts-expect-error
+        expect(webSocket.isClosing()).toBeTruthy();
+    });
+
+    test('isValidWebSocketAnswer', () => {
+        const webSocket = new WebSocketManager({ url: 'wss' });
+
+        // @ts-expect-error
+        expect(webSocket.isValidWebSocketAnswer({ method: test })).toBeTruthy();
+    });
+
+    test('isIntervaledOperation', () => {
+        const webSocket = new WebSocketManager({ url: 'wss' });
+
+        // @ts-expect-error
+        expect(webSocket.isIntervaledOperation({ method: test, interval: true })).toBeTruthy();
+    });
+});
 
 //     test('checkOperationUnique', () => {
 //         const websocket = new WebSocketManager('test');

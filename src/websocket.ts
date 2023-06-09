@@ -83,6 +83,11 @@ class WebSocketManager {
         if (!event.wasClean) {
             this.reconnectInterval = setInterval(this.open, this.defaultInterval);
         }
+        for (const operation of this.operations.values()) {
+            if (this.isIntervaledOperation(operation)) {
+                clearInterval(operation._interval);
+            }
+        }
     }
 
     private onOpenHandler (): void {
