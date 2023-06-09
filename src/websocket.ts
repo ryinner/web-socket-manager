@@ -12,11 +12,16 @@ class WebSocketManager {
 
     private get ws (): WebSocket {
         if (!this.isWebSocket(this.webSocketInstance) || this.isClose()) {
+            const openHandler = this.onOpenHandler.bind(this);
+            const closeHandler = this.onCloseHandler.bind(this);
+            const messageHandler = this.onMessageHandler.bind(this);
+            const errorHandler = this.onErrorHandler.bind(this);
+
             this.webSocketInstance = new WebSocket(this.wss);
-            this.webSocketInstance.addEventListener('close', this.onCloseHandler);
-            this.webSocketInstance.addEventListener('open', this.onOpenHandler);
-            this.webSocketInstance.addEventListener('message', this.onMessageHandler);
-            this.webSocketInstance.addEventListener('onerror', this.onErrorHandler);
+            this.webSocketInstance.onclose = closeHandler;
+            this.webSocketInstance.onopen = openHandler;
+            this.webSocketInstance.onmessage = messageHandler;
+            this.webSocketInstance.onerror = errorHandler;
         }
         return this.webSocketInstance;
     }
@@ -35,10 +40,6 @@ class WebSocketManager {
         if (!this.isClose() && !this.isClosing()) {
             this.ws.close();
             clearInterval(this.reconnectInterval);
-            this.webSocketInstance?.removeEventListener('close', this.onCloseHandler);
-            this.webSocketInstance?.removeEventListener('open', this.onOpenHandler);
-            this.webSocketInstance?.removeEventListener('message', this.onMessageHandler);
-            this.webSocketInstance?.removeEventListener('onerror', this.onErrorHandler);
         }
     }
 
@@ -85,10 +86,9 @@ class WebSocketManager {
 
     private onOpenHandler (): void {
         clearInterval(this.reconnectInterval);
-
-        this.operations.forEach(operation => {
+        for (const operation of this.operations.values()) {
             this.pickOperationStrategy(operation);
-        });
+        }
     }
 
     private onMessageHandler (event: MessageEvent): void {
@@ -98,7 +98,7 @@ class WebSocketManager {
             const { handlers } = operation;
             if (Array.isArray(handlers)) {
                 handlers.forEach(handler => {
-                    handler(answer);
+                    handler(answer.data);
                 });
             }
         }

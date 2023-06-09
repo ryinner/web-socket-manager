@@ -1,5 +1,5 @@
-import type { WebSocketAnswerData, WebSocketManagerSettings, WebSocketSend } from './websocket.interface';
+import type { OperationRequest, WebSocketAnswerDecoded, WebSocketManagerSettings, WebSocketSend } from './websocket.interface';
 import createWebSocket from './websocketFactory';
 
 export default createWebSocket;
-export type { WebSocketAnswerData, WebSocketSend, WebSocketManagerSettings };
+export type { WebSocketAnswerDecoded, WebSocketSend, WebSocketManagerSettings, OperationRequest };
