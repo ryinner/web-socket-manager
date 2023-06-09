@@ -1,3 +1,4 @@
+import parseQueryParams from './parseQueryParams';
 import type { OperationsHandler, OperationsHandlers, WebSocketAnswerDecoded, WebSocketManagerSettings, WebSocketParsedOperation, WebSocketSend, WebSocketSendIntervaled } from './websocket.interface';
 
 class WebSocketManager {
@@ -149,14 +150,5 @@ class WebSocketManager {
     }
 }
 
-function parseQueryParams (queryParams?: Record<string, string>): string {
-    if (typeof queryParams !== 'object') {
-        return '';
-    }
-    return `?${new URLSearchParams(queryParams).toString()}`;
-}
-
 export default WebSocketManager;
-export const OPERATION_DOESNT_EXIST_ERROR = 'Operation doesn\'t exist';
-export const WEB_SOCKET_ERROR = 'WEB_SOCKET_WAS_CLOSED_WITH_ERROR';
 export const DEFAULT_SOCKET_INTERVAL = 3000;
