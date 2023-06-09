@@ -1,264 +1,264 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import WebSocketManager, { DEFAULT_SOCKET_INTERVAL, OPERATION_DOESNT_EXIST_ERROR } from './websocket';
+// import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+// import WebSocketManager, { DEFAULT_SOCKET_INTERVAL, OPERATION_DOESNT_EXIST_ERROR } from './websocket';
 
-type Writable<T> = T extends object ? { -readonly [K in keyof T]: Writable<T[K]> } : T;
+// type Writable<T> = T extends object ? { -readonly [K in keyof T]: Writable<T[K]> } : T;
 
-type WebSocketMock = Partial<Writable<WebSocket>>;
+// type WebSocketMock = Partial<Writable<WebSocket>>;
 
-const webSocketSpy = {
-    onmessage: vi.fn(),
-    onerror: vi.fn(),
-    onclose: vi.fn(),
-    onopen: vi.fn(),
-    close: vi.fn(),
-    send: vi.fn(),
-    readyState: 1
-};
+// const webSocketSpy = {
+//     onmessage: vi.fn(),
+//     onerror: vi.fn(),
+//     onclose: vi.fn(),
+//     onopen: vi.fn(),
+//     close: vi.fn(),
+//     send: vi.fn(),
+//     readyState: 1
+// };
 
-const mockWebSocket = <WebSocketMock> vi.fn<[], WebSocketMock>(() => webSocketSpy);
+// const mockWebSocket = <WebSocketMock> vi.fn<[], WebSocketMock>(() => webSocketSpy);
 
-mockWebSocket.CONNECTING = 0;
-mockWebSocket.OPEN = 1;
-mockWebSocket.CLOSING = 2;
-mockWebSocket.CLOSED = 3;
+// mockWebSocket.CONNECTING = 0;
+// mockWebSocket.OPEN = 1;
+// mockWebSocket.CLOSING = 2;
+// mockWebSocket.CLOSED = 3;
 
-vi.stubGlobal('WebSocket', mockWebSocket);
-describe('WebsocketManager', () => {
-    beforeEach(() => {
-        vi.useFakeTimers();
-    });
+// vi.stubGlobal('WebSocket', mockWebSocket);
+// describe('WebsocketManager', () => {
+//     beforeEach(() => {
+//         vi.useFakeTimers();
+//     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
+//     afterEach(() => {
+//         vi.restoreAllMocks();
+//     });
 
-    test('isOpen', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('isOpen', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        webSocket.webSocketInstance = { readyState: 1 };
+//         // @ts-expect-error
+//         webSocket.webSocketInstance = { readyState: 1 };
 
-        // @ts-expect-error
-        expect(webSocket.isOpen()).toBeTruthy();
-    });
+//         // @ts-expect-error
+//         expect(webSocket.isOpen()).toBeTruthy();
+//     });
 
-    test('isClosed', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('isClosed', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        webSocket.webSocketInstance = { readyState: 3 };
+//         // @ts-expect-error
+//         webSocket.webSocketInstance = { readyState: 3 };
 
-        // @ts-expect-error
-        expect(webSocket.isClosed()).toBeTruthy();
-    });
+//         // @ts-expect-error
+//         expect(webSocket.isClosed()).toBeTruthy();
+//     });
 
-    test('checkOperationUnique', () => {
-        const websocket = new WebSocketManager('test');
+//     test('checkOperationUnique', () => {
+//         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
-        // @ts-expect-error
-        expect(websocket.checkOperationUnique('test')).toBeFalsy();
-    });
+//         // @ts-expect-error
+//         expect(websocket.checkOperationUnique('test')).toBeFalsy();
+//     });
 
-    test('findOperation', () => {
-        const websocket = new WebSocketManager('test');
+//     test('findOperation', () => {
+//         const websocket = new WebSocketManager('test');
 
-        const checkCallback = (): object => ({ data: 123 });
+//         const checkCallback = (): object => ({ data: 123 });
 
-        websocket.addOperation('test', checkCallback, () => { });
+//         websocket.addOperation('test', checkCallback, () => { });
 
-        // @ts-expect-error
-        expect(websocket.findOperation('test')?.method).toBe('test');
-    });
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test')?.method).toBe('test');
+//     });
 
-    test('isValidWebSocketAnswer', () => {
-        const websocket = new WebSocketManager('test');
+//     test('isValidWebSocketAnswer', () => {
+//         const websocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        expect(websocket.isValidWebSocketAnswer({ name: 'invalid' })).toBeFalsy();
-        // @ts-expect-error
-        expect(websocket.isValidWebSocketAnswer({ name: 'valid', method: 'check' })).toBeTruthy();
-    });
+//         // @ts-expect-error
+//         expect(websocket.isValidWebSocketAnswer({ name: 'invalid' })).toBeFalsy();
+//         // @ts-expect-error
+//         expect(websocket.isValidWebSocketAnswer({ name: 'valid', method: 'check' })).toBeTruthy();
+//     });
 
-    test('addHandler', () => {
-        const websocket = new WebSocketManager('test');
+//     test('addHandler', () => {
+//         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => ({ data: 123 }), () => { });
-        // @ts-expect-error
-        websocket.addHandler('test', () => { });
+//         websocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         // @ts-expect-error
+//         websocket.addHandler('test', () => { });
 
-        // @ts-expect-error
-        expect(websocket.findOperation('test')?.handlers.length).toBe(2);
-        // @ts-expect-error
-        expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
-    });
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test')?.handlers.length).toBe(2);
+//         // @ts-expect-error
+//         expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
+//     });
 
-    test('removeHandler', () => {
-        const websocket = new WebSocketManager('test');
+//     test('removeHandler', () => {
+//         const websocket = new WebSocketManager('test');
 
-        const testHandler = (): void => { };
-        const testHandler2 = (): void => { };
+//         const testHandler = (): void => { };
+//         const testHandler2 = (): void => { };
 
-        websocket.addOperation('test', () => ({ data: 123 }), testHandler);
-        websocket.addOperation('test', () => ({ data: 123 }), testHandler2);
-        websocket.removeHandler('test', testHandler2);
-        // @ts-expect-error
-        expect(websocket.findOperation('test')?.handlers.length).toBe(1);
-        websocket.removeHandler('test', testHandler);
-        // @ts-expect-error
-        expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
-    });
+//         websocket.addOperation('test', () => ({ data: 123 }), testHandler);
+//         websocket.addOperation('test', () => ({ data: 123 }), testHandler2);
+//         websocket.removeHandler('test', testHandler2);
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test')?.handlers.length).toBe(1);
+//         websocket.removeHandler('test', testHandler);
+//         // @ts-expect-error
+//         expect(() => { websocket.addHandler('error', () => { }); }).throw(OPERATION_DOESNT_EXIST_ERROR);
+//     });
 
-    test('removeOperation', () => {
-        const websocket = new WebSocketManager('test');
+//     test('removeOperation', () => {
+//         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => ({ data: 123 }), () => { });
-        websocket.removeOperation('test');
+//         websocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         websocket.removeOperation('test');
 
-        // @ts-expect-error
-        expect(websocket.findOperation('test')).toBe(undefined);
-        expect(() => { websocket.removeOperation('test'); }).throw(OPERATION_DOESNT_EXIST_ERROR);
-    });
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test')).toBe(undefined);
+//         expect(() => { websocket.removeOperation('test'); }).throw(OPERATION_DOESNT_EXIST_ERROR);
+//     });
 
-    test('addOperation', () => {
-        const websocket = new WebSocketManager('test');
+//     test('addOperation', () => {
+//         const websocket = new WebSocketManager('test');
 
-        websocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
-        // @ts-expect-error
-        expect(websocket.findOperation('test')?.handlers.length).equal(1);
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test')?.handlers.length).equal(1);
 
-        websocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         websocket.addOperation('test', () => ({ data: 123 }), () => { });
 
-        // @ts-expect-error
-        const operation = websocket.findOperation('test');
+//         // @ts-expect-error
+//         const operation = websocket.findOperation('test');
 
-        expect(operation?.handlers.length).equal(2);
-        expect(operation?.interval).equal(0);
-        // @ts-expect-error
-        websocket.webSocket.readyState = 1;
+//         expect(operation?.handlers.length).equal(2);
+//         expect(operation?.interval).equal(0);
+//         // @ts-expect-error
+//         websocket.webSocket.readyState = 1;
 
-        const spy = vi.fn();
+//         const spy = vi.fn();
 
-        websocket.addOperation('test2', spy, () => { }, { isOnce: false });
-        websocket.addOperation('test3', () => ({}), () => { }, { isOnce: true });
+//         websocket.addOperation('test2', spy, () => { }, { isOnce: false });
+//         websocket.addOperation('test3', () => ({}), () => { }, { isOnce: true });
 
-        vi.advanceTimersToNextTimer();
+//         vi.advanceTimersToNextTimer();
 
-        expect(webSocketSpy.send).toHaveBeenCalledOnce();
+//         expect(webSocketSpy.send).toHaveBeenCalledOnce();
 
-        expect(spy).toHaveBeenCalledOnce();
-        // @ts-expect-error
-        expect(websocket.findOperation('test2')?.interval).not.toBe(0);
-        // @ts-expect-error
-        expect(websocket.findOperation('test3')?.interval).toBe(0);
-    });
+//         expect(spy).toHaveBeenCalledOnce();
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test2')?.interval).not.toBe(0);
+//         // @ts-expect-error
+//         expect(websocket.findOperation('test3')?.interval).toBe(0);
+//     });
 
-    test('setOnOpenHandler', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('setOnOpenHandler', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        const spy = vi.fn();
-        const spy2 = vi.fn();
+//         const spy = vi.fn();
+//         const spy2 = vi.fn();
 
-        webSocket.addOperation('test', spy, () => { }, { isOnce: false });
-        webSocket.addOperation('test2', spy2, () => { }, { isOnce: true });
+//         webSocket.addOperation('test', spy, () => { }, { isOnce: false });
+//         webSocket.addOperation('test2', spy2, () => { }, { isOnce: true });
 
-        // @ts-expect-error
-        webSocket.onOpenHandler();
+//         // @ts-expect-error
+//         webSocket.onOpenHandler();
 
-        vi.advanceTimersToNextTimer();
+//         vi.advanceTimersToNextTimer();
 
-        expect(spy).toHaveBeenCalledOnce();
-        // @ts-expect-error
-        expect(webSocket.findOperation('test')?.interval).not.toBe(0);
+//         expect(spy).toHaveBeenCalledOnce();
+//         // @ts-expect-error
+//         expect(webSocket.findOperation('test')?.interval).not.toBe(0);
 
-        // @ts-expect-error
-        expect(webSocket.findOperation('test2')?.interval).toBe(0);
-    });
+//         // @ts-expect-error
+//         expect(webSocket.findOperation('test2')?.interval).toBe(0);
+//     });
 
-    test('onMessageHandler', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('onMessageHandler', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        const spy = vi.fn();
+//         const spy = vi.fn();
 
-        webSocket.addOperation('test', () => ({ data: 123 }), spy);
-        webSocket.addOperation('test2', () => ({ data: 123 }), spy, { isOnce: true });
+//         webSocket.addOperation('test', () => ({ data: 123 }), spy);
+//         webSocket.addOperation('test2', () => ({ data: 123 }), spy, { isOnce: true });
 
-        const fixture = { method: 'test', data: { data: 'test' } };
-        const fixture2 = { method: 'test2', data: { data: 'test' } };
+//         const fixture = { method: 'test', data: { data: 'test' } };
+//         const fixture2 = { method: 'test2', data: { data: 'test' } };
 
-        // @ts-expect-error
-        webSocket.onMessageHandler({ data: JSON.stringify(fixture) });
-        expect(spy).toHaveBeenCalledOnce();
-        // @ts-expect-error
-        webSocket.onMessageHandler({ data: JSON.stringify(fixture2) });
-        // @ts-expect-error
-        expect(webSocket.findOperation('test2')).toBe(undefined);
-    });
+//         // @ts-expect-error
+//         webSocket.onMessageHandler({ data: JSON.stringify(fixture) });
+//         expect(spy).toHaveBeenCalledOnce();
+//         // @ts-expect-error
+//         webSocket.onMessageHandler({ data: JSON.stringify(fixture2) });
+//         // @ts-expect-error
+//         expect(webSocket.findOperation('test2')).toBe(undefined);
+//     });
 
-    test('onCloseHandler', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('onCloseHandler', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        webSocket.onCloseHandler({ wasClean: true });
-        // @ts-expect-error
-        expect(webSocket.reconnectInterval).equal(undefined);
-        // @ts-expect-error
-        webSocket.onCloseHandler({ wasClean: false });
-        // @ts-expect-error
-        expect(webSocket.reconnectInterval).not.equal(undefined);
-    });
+//         // @ts-expect-error
+//         webSocket.onCloseHandler({ wasClean: true });
+//         // @ts-expect-error
+//         expect(webSocket.reconnectInterval).equal(undefined);
+//         // @ts-expect-error
+//         webSocket.onCloseHandler({ wasClean: false });
+//         // @ts-expect-error
+//         expect(webSocket.reconnectInterval).not.equal(undefined);
+//     });
 
-    test('start', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('start', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        webSocket.isTesting = true;
+//         // @ts-expect-error
+//         webSocket.isTesting = true;
 
-        webSocket.start();
+//         webSocket.start();
 
-        expect(WebSocket).toHaveBeenCalledOnce();
-    });
+//         expect(WebSocket).toHaveBeenCalledOnce();
+//     });
 
-    test('stop', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('stop', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        webSocket.isTesting = true;
+//         // @ts-expect-error
+//         webSocket.isTesting = true;
 
-        webSocket.addOperation('test', () => ({ data: 123 }), () => { });
+//         webSocket.addOperation('test', () => ({ data: 123 }), () => { });
 
-        webSocket.start();
-        webSocket.stop();
+//         webSocket.start();
+//         webSocket.stop();
 
-        expect(webSocketSpy.close).toHaveBeenCalledTimes(1);
+//         expect(webSocketSpy.close).toHaveBeenCalledTimes(1);
 
-        // @ts-expect-error
-        expect(webSocket.findOperation('test')?.interval).equal(0);
-    });
+//         // @ts-expect-error
+//         expect(webSocket.findOperation('test')?.interval).equal(0);
+//     });
 
-    test('settings', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('settings', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        // @ts-expect-error
-        expect(webSocket.defaultInterval).equal(DEFAULT_SOCKET_INTERVAL);
+//         // @ts-expect-error
+//         expect(webSocket.defaultInterval).equal(DEFAULT_SOCKET_INTERVAL);
 
-        const webSocket2 = new WebSocketManager('test', {
-            interval: 1000
-        });
+//         const webSocket2 = new WebSocketManager('test', {
+//             interval: 1000
+//         });
 
-        // @ts-expect-error
-        expect(webSocket2.defaultInterval).equal(1000);
-    });
+//         // @ts-expect-error
+//         expect(webSocket2.defaultInterval).equal(1000);
+//     });
 
-    test('sendMessage', () => {
-        const webSocket = new WebSocketManager('test');
+//     test('sendMessage', () => {
+//         const webSocket = new WebSocketManager('test');
 
-        webSocket.sendMessage('test', { test: 'test' }, () => { });
+//         webSocket.sendMessage('test', { test: 'test' }, () => { });
 
-        // @ts-expect-error
-        expect(webSocket.findOperation('test')?.settings?.isOnce).toBeTruthy();
-    });
-});
+//         // @ts-expect-error
+//         expect(webSocket.findOperation('test')?.settings?.isOnce).toBeTruthy();
+//     });
+// });

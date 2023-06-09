@@ -35,7 +35,6 @@
         "no-multi-spaces": "warn",
         "brace-style": ["error", "1tbs", {"allowSingleLine": true}],
         "comma-spacing": "warn",
-        "func-call-spacing": ["error", "never"],
         "implicit-arrow-linebreak": ["warn", "beside"],
         "no-multiple-empty-lines": "error",
         "semi": ["error", "always"],

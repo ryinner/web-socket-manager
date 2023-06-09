@@ -1,172 +1,156 @@
-import type { WebSocketAnswerDecoded, WebSocketCallback, WebSocketManagerSettings, WebSocketMessageHandlerCallback, WebSocketOperation, WebSocketOperationSetting } from './websocket.interface';
+import type { OperationsHandler, OperationsHandlers, WebSocketAnswerDecoded, WebSocketManagerSettings, WebSocketParsedOperation, WebSocketSend, WebSocketSendIntervaled } from './websocket.interface';
 
 class WebSocketManager {
-    private readonly isTesting: boolean = false;
-
-    private webSocketInstance!: WebSocket;
-    private readonly operations: WebSocketOperation[] = [];
-    private readonly defaultInterval: number;
+    private webSocketInstance?: WebSocket;
     private reconnectInterval!: number | NodeJS.Timer;
-    private readonly openWebSocketStatuses: number[] = [WebSocket.CONNECTING, WebSocket.OPEN];
-    private readonly closeWebSocketStatuses: number[] = [WebSocket.CLOSING, WebSocket.CLOSED];
-    private readonly wss: string;
+    public operations = new Map<string, WebSocketParsedOperation>();
 
-    constructor (webSocketUrl: string, settings?: WebSocketManagerSettings) {
-        this.wss = webSocketUrl;
+    private readonly wss!: string;
+    private readonly defaultInterval!: number;
+    // only for tests
+    private readonly isTesting = false;
 
-        this.defaultInterval = settings?.interval ?? DEFAULT_SOCKET_INTERVAL;
-    }
-
-    private get webSocket (): WebSocket {
-        if (this.webSocketInstance === undefined || !(this.isWebSocket(this.webSocketInstance)) || this.webSocketInstance.readyState === WebSocket.CLOSED) {
+    private get ws (): WebSocket {
+        if (!this.isWebSocket(this.webSocketInstance) || this.isClose()) {
             this.webSocketInstance = new WebSocket(this.wss);
+            this.webSocketInstance.addEventListener('close', this.onCloseHandler);
+            this.webSocketInstance.addEventListener('open', this.onOpenHandler);
+            this.webSocketInstance.addEventListener('message', this.onMessageHandler);
+            this.webSocketInstance.addEventListener('onerror', this.onErrorHandler);
         }
-
         return this.webSocketInstance;
     }
 
-    public stop (): void {
-        this.operations.forEach(webSocketOperation => {
-            clearInterval(webSocketOperation.interval);
-        });
-        clearInterval(this.reconnectInterval);
-        if ((this.isWebSocket(this.webSocketInstance)) && !this.isClosed()) {
-            this.webSocketInstance.close();
+    constructor (settings: WebSocketManagerSettings) {
+        this.wss = settings.url + parseQueryParams(settings.additionalQueryParams);
+        this.defaultInterval = settings.interval ?? DEFAULT_SOCKET_INTERVAL;
+    }
+
+    public open (): void {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.ws;
+    }
+
+    public close (): void {
+        if (!this.isClose() && !this.isClosing()) {
+            this.ws.close();
+            clearInterval(this.reconnectInterval);
+            this.webSocketInstance?.removeEventListener('close', this.onCloseHandler);
+            this.webSocketInstance?.removeEventListener('open', this.onOpenHandler);
+            this.webSocketInstance?.removeEventListener('message', this.onMessageHandler);
+            this.webSocketInstance?.removeEventListener('onerror', this.onErrorHandler);
         }
     }
 
-    public start (): void {
-        if (this instanceof WebSocketManager && !this.isOpen() && this.isWebSocket(this.webSocket)) {
-            this.webSocket.onopen = () => { this.onOpenHandler(); };
-            this.webSocket.onerror = () => { this.stop(); };
-            this.webSocket.onclose = (event) => { this.onCloseHandler(event); };
-            this.webSocket.onmessage = (answer: MessageEvent) => { this.onMessageHandler(answer); };
-        }
-    }
-
-    public addOperation (method: string, callback: WebSocketCallback, handler: WebSocketMessageHandlerCallback, settings?: WebSocketOperationSetting): void {
-        if (this.checkOperationUnique(method)) {
-            const needInterval = this.isOpen() && settings?.isOnce !== true;
-            const parsedCallback = (): void => {
-                if (this.isAvailableToSendMessages()) {
-                    this.webSocket.send(JSON.stringify({ method, data: callback() }));
-                } else {
-                    if (settings?.isOnce === true) {
-                        setTimeout(parsedCallback, 1000);
-                    }
-                }
-            };
-
-            const operationInterval = needInterval ? setInterval(parsedCallback, settings?.interval ?? this.defaultInterval, this.webSocket) : 0;
-            this.operations.push({
-                method,
-                callback: parsedCallback,
-                handlers: [handler],
-                interval: operationInterval,
-                settings
-            });
+    public addOperation <T> (operationSetting: WebSocketSend <T>): void {
+        const operation = this.findOperation(operationSetting.method);
+        if (operation !== undefined && Array.isArray(operationSetting.handlers)) {
+            this.addHandlers(operation, <OperationsHandlers> operationSetting.handlers);
         } else {
-            this.addHandler(method, handler);
+            const callback = (): void => {
+                this.ws.send(JSON.stringify({ method: operationSetting.method, ...operationSetting.request }));
+            };
+            this.operations.set(operationSetting.method, { ...<WebSocketSend> operationSetting, callback });
         }
     }
 
     public removeOperation (method: string): void {
+        this.operations.delete(method);
+    }
+
+    public removeHandler (method: string, handler: OperationsHandler): void {
         const operation = this.findOperation(method);
-        if (operation !== undefined) {
-            clearInterval(operation.interval);
-            this.operations.splice(this.operations.indexOf(operation), 1);
-        } else {
-            throw new Error(OPERATION_DOESNT_EXIST_ERROR);
+        if (operation !== undefined && Array.isArray(operation?.handlers)) {
+            const handlerIndex = operation.handlers.findIndex(existHandler => existHandler === handler);
+            operation.handlers.splice(handlerIndex, 1);
         }
     }
 
-    public removeHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
-        const operation = this.findOperation(method);
-        if (operation?.handlers.length === 1) {
-            this.removeOperation(method);
-        } else {
-            operation?.handlers.splice(operation?.handlers.indexOf(handler), 1);
-        }
+    private findOperation (method: string): WebSocketParsedOperation | undefined {
+        return this.operations.get(method);
     }
 
-    public sendMessage (method: string, data: object, handler: WebSocketMessageHandlerCallback): void {
-        this.addOperation(method, () => data, handler, {
-            isOnce: true
-        });
-    }
-
-    private addHandler (method: string, handler: WebSocketMessageHandlerCallback): void {
-        const operation = this.findOperation(method);
-        if (operation !== undefined) {
-            operation.handlers.push(handler);
-        } else {
-            throw new Error(OPERATION_DOESNT_EXIST_ERROR);
+    private addHandlers (operation: WebSocketSend, handlers: OperationsHandlers): void {
+        if (!Array.isArray(operation.handlers)) {
+            operation.handlers = [];
         }
+        operation.handlers.push(...handlers);
     }
 
     private onCloseHandler (event: CloseEvent): void {
         if (!event.wasClean) {
-            this.reconnectInterval = setInterval(this.start, this.defaultInterval);
-        }
-    }
-
-    private onMessageHandler (answer: MessageEvent): void {
-        const answerDecoded = JSON.parse(answer.data);
-        const operation = this.findOperation(answerDecoded.method);
-        if (this.isValidWebSocketAnswer(answerDecoded) && operation !== undefined) {
-            const { handlers, settings, method } = operation;
-            if (handlers instanceof Array) {
-                handlers.forEach(handler => {
-                    handler(answerDecoded.data);
-                });
-                if (settings?.isOnce === true) {
-                    this.removeOperation(method);
-                }
-            }
+            this.reconnectInterval = setInterval(this.open, this.defaultInterval);
         }
     }
 
     private onOpenHandler (): void {
         clearInterval(this.reconnectInterval);
-        this.operations.forEach(webSocketOperation => {
-            if (webSocketOperation.settings?.isOnce !== true) {
-                webSocketOperation.interval = setInterval(webSocketOperation.callback, webSocketOperation.settings?.interval ?? this.defaultInterval, this.webSocket);
-            } else {
-                webSocketOperation.callback();
-            }
+
+        this.operations.forEach(operation => {
+            this.pickOperationStrategy(operation);
         });
     }
 
-    private isValidWebSocketAnswer (answer: unknown): answer is WebSocketAnswerDecoded {
-        return typeof answer === 'object' && answer !== null && 'method' in answer;
+    private onMessageHandler (event: MessageEvent): void {
+        const answer = JSON.parse(event.data);
+        const operation = this.findOperation(answer.method);
+        if (this.isValidWebSocketAnswer(answer) && operation !== undefined) {
+            const { handlers } = operation;
+            if (Array.isArray(handlers)) {
+                handlers.forEach(handler => {
+                    handler(answer);
+                });
+            }
+        }
     }
 
-    private findOperation (method: string): WebSocketOperation | undefined {
-        return this.operations.find(webSocketExistingOperation => webSocketExistingOperation.method === method);
+    private onErrorHandler (error: Event): void {
+        this.close();
+        console.log(error);
     }
 
-    private checkOperationUnique (method: string): boolean {
-        return this.findOperation(method) === undefined;
-    }
-
-    private isAvailableToSendMessages (): boolean {
-        return this.webSocketInstance.readyState === WebSocket.OPEN;
-    }
-
-    private isOpen (): boolean {
-        return this.openWebSocketStatuses.includes(this.webSocketInstance?.readyState);
-    }
-
-    private isClosed (): boolean {
-        return this.closeWebSocketStatuses.includes(this.webSocketInstance?.readyState);
+    private pickOperationStrategy (operation: WebSocketParsedOperation): void {
+        if (this.isIntervaledOperation(operation)) {
+            const interval = typeof operation.interval !== 'number' ? this.defaultInterval : operation.interval;
+            operation._interval = setInterval(operation.callback, interval);
+        } else {
+            operation.callback();
+        }
     }
 
     private isWebSocket (instance: unknown): instance is WebSocket {
         return instance instanceof WebSocket || this.isTesting;
     }
+
+    private isClosing (): boolean {
+        return this.webSocketInstance?.readyState === WebSocket.CLOSING;
+    }
+
+    private isClose (): boolean {
+        return this.webSocketInstance?.readyState === WebSocket.CLOSED;
+    }
+
+    private isOpen (): boolean {
+        return this.webSocketInstance?.readyState === WebSocket.OPEN;
+    }
+
+    private isIntervaledOperation (operation: WebSocketSend): operation is WebSocketSendIntervaled {
+        return 'interval' in operation;
+    }
+
+    private isValidWebSocketAnswer (answer: unknown): answer is WebSocketAnswerDecoded {
+        return typeof answer === 'object' && answer !== null && 'method' in answer;
+    }
+}
+
+function parseQueryParams (queryParams?: Record<string, string>): string {
+    if (typeof queryParams !== 'object') {
+        return '';
+    }
+    return `?${new URLSearchParams(queryParams).toString()}`;
 }
 
 export default WebSocketManager;
-export { type WebSocketAnswerDecoded, type WebSocketCallback, type WebSocketMessageHandlerCallback, type WebSocketOperation };
 export const OPERATION_DOESNT_EXIST_ERROR = 'Operation doesn\'t exist';
+export const WEB_SOCKET_ERROR = 'WEB_SOCKET_WAS_CLOSED_WITH_ERROR';
 export const DEFAULT_SOCKET_INTERVAL = 3000;
