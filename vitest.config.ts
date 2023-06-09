@@ -15,7 +15,7 @@ export default defineConfig({
         include: ['src/**/*.{test,spec}.{ts,tsx,mts,cts}'],
         coverage: {
             reporter: 'text',
-            exclude: ['src/**/*.{test,spec}.*']
+            exclude: ['src/**/*.{test,spec}.*', 'src/__mocks__/*']
         }
     }
 });

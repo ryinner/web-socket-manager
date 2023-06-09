@@ -1,26 +1,26 @@
 import WebSocketManager from './websocket';
 import type { OperationsHandler, WebSocketManagerSettings, WebSocketSend } from './websocket.interface';
 
-type WebSocketsConnections<T> = Partial<Record<keyof T, WebSocketManager>>;
+type WebSocketsConnections<T> = Map<keyof T, WebSocketManager>;
 
 class WebSocketList<T> {
-    private readonly webSockets: WebSocketsConnections<T> = {};
+    private readonly webSockets: WebSocketsConnections<T> = new Map();
 
     constructor (settings: Record<keyof T, WebSocketManagerSettings>) {
         for (const id in settings) {
             if (Object.prototype.hasOwnProperty.call(settings, id)) {
                 const wsSettings = settings[id];
-                this.webSockets[id] = new WebSocketManager(wsSettings);
+                this.webSockets.set(id, new WebSocketManager(wsSettings));
             }
         }
     }
 
     public getConnection (id: keyof T): WebSocketManager {
-        const webSocket = this.webSockets[id];
+        const webSocket = this.webSockets.get(id);
         if (webSocket !== undefined) {
             return webSocket;
         }
-        throw new Error('WebSocket doesn\'t exists');
+        throw new Error(WS_DOESNT_EXISTS);
     }
 
     public addOperation (id: keyof T, operationSetting: WebSocketSend): void {
@@ -51,3 +51,4 @@ function isWebSocketSettings (settings: object): settings is WebSocketManagerSet
 }
 
 export default createWebSocket;
+export const WS_DOESNT_EXISTS = 'WebSocket doesn\'t exists';
