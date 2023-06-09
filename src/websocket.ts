@@ -53,6 +53,7 @@ class WebSocketManager {
             };
             this.operations.set(operationSetting.method, { ...<WebSocketSend> operationSetting, callback });
         }
+        this.open();
     }
 
     public removeOperation (method: string): void {

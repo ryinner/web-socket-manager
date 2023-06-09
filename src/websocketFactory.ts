@@ -1,10 +1,10 @@
 import WebSocketManager from './websocket';
 import type { OperationsHandler, WebSocketManagerSettings, WebSocketSend } from './websocket.interface';
 
-type WebSocketsConnections<T> = Record<keyof T, WebSocketManager>;
+type WebSocketsConnections<T> = Partial<Record<keyof T, WebSocketManager>>;
 
 class WebSocketList<T> {
-    private readonly webSockets!: WebSocketsConnections<T>;
+    private readonly webSockets: WebSocketsConnections<T> = {};
 
     constructor (settings: Record<keyof T, WebSocketManagerSettings>) {
         for (const id in settings) {
@@ -16,7 +16,11 @@ class WebSocketList<T> {
     }
 
     public getConnection (id: keyof T): WebSocketManager {
-        return this.webSockets[id];
+        const webSocket = this.webSockets[id];
+        if (webSocket !== undefined) {
+            return webSocket;
+        }
+        throw new Error('WebSocket doesn\'t exists');
     }
 
     public addOperation (id: keyof T, operationSetting: WebSocketSend): void {
