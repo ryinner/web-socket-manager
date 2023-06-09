@@ -1,5 +1,5 @@
 import WebSocketManager from './websocket';
-import type { WebSocketManagerSettings } from './websocket.interface';
+import type { OperationsHandler, WebSocketManagerSettings, WebSocketSend } from './websocket.interface';
 
 type WebSocketsConnections<T> = Record<keyof T, WebSocketManager>;
 
@@ -17,6 +17,18 @@ class WebSocketList<T> {
 
     public getConnection (id: keyof T): WebSocketManager {
         return this.webSockets[id];
+    }
+
+    public addOperation (id: keyof T, operationSetting: WebSocketSend): void {
+        this.getConnection(id).addOperation(operationSetting);
+    }
+
+    public removeOperation (id: keyof T, method: string): void {
+        this.getConnection(id).removeOperation(method);
+    }
+
+    public removeHandler (id: keyof T, method: string, handler: OperationsHandler): void {
+        this.getConnection(id).removeHandler(method, handler);
     }
 }
 
