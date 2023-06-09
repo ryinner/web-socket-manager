@@ -3,7 +3,7 @@ import type { OperationsHandler, OperationsHandlers, WebSocketAnswerDecoded, Web
 class WebSocketManager {
     private webSocketInstance?: WebSocket;
     private reconnectInterval!: number | NodeJS.Timer;
-    public operations = new Map<string, WebSocketParsedOperation>();
+    private readonly operations = new Map<string, WebSocketParsedOperation>();
 
     private readonly wss!: string;
     private readonly defaultInterval!: number;
