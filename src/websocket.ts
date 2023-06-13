@@ -50,7 +50,7 @@ class WebSocketManager {
             this.addHandlers(operation, <OperationsHandlers> operationSetting.handlers);
         } else {
             const callback = (): void => {
-                this.ws.send(JSON.stringify({ method: operationSetting.method, ...operationSetting.request }));
+                this.ws.send(JSON.stringify({ method: operationSetting.method, ...operationSetting.request() }));
             };
             this.operations.set(operationSetting.method, { ...<WebSocketSend> operationSetting, callback });
         }
